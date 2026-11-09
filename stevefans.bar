@@ -1,7 +1,7 @@
 <bar protocol-version="0"
      id="stevefans"
      title="SteveFans"
-     version="4.0.0"
+     version="1.0.0"
      category="social"
      description="像素风 X 粉丝看板：点阵数字、用户头像、像素柱与本机涨跌记录，跟随系统深浅色。"
      license="MIT"
