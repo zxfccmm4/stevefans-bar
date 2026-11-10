@@ -1,9 +1,9 @@
 <bar protocol-version="0"
      id="stevefans"
      title="SteveFans"
-     version="1.0.0"
+     version="1.9.0"
      category="social"
-     description="像素风 X 粉丝看板：点阵数字、用户头像、像素柱与本机涨跌记录，跟随系统深浅色。"
+     description="Lobe MyGo 风格的 X 粉丝看板：圆角卡片、点阵数字与标签、滚动动画、X 认证徽章和 14 天面积图。"
      license="MIT"
      homepage="https://x.com/st7evechou"
      refresh="10m"
@@ -23,7 +23,7 @@
            help="逗号或空格分隔，不要带 `@`。第一个账号决定菜单栏显示的粉丝数。" />
   </inputs>
 
-  <docs><![CDATA[像素风看板，跟随系统深浅色：浅色白底黑字，深色黑底白字。在 Inputs 里填写一个或多个 X 用户名（逗号或空格分隔，不带 @），数据来自公开的 FxTwitter API，头像来自 pbs.twimg.com。粉丝数用 5×7 点阵逐格绘制，分隔线与涨跌柱状图按像素网格绘制；涨跌按本机每天采样，仅从首次打开看板后开始积累。]]></docs>
+  <docs><![CDATA[Lobe MyGo 风格看板，跟随系统深浅色：浅色圆角卡片，深色圆角卡片。在 Inputs 里填写一个或多个 X 用户名（逗号或空格分隔，不带 @），数据来自公开的 FxTwitter API，头像来自 pbs.twimg.com。粉丝数、标签、统计值和涨跌使用 5×7 点阵；粉丝数首次加载和变化时播放滚动动画；X 认证使用官方认证徽章；趋势使用 14 天面积图，无数据时显示空图表，涨跌按本机每天采样，仅从首次打开看板后开始积累。]]></docs>
 
   <script apis="localStorage shell match-media"><![CDATA[
 const h = (type, props, ...children) =>
@@ -32,26 +32,24 @@ const TX = (text, props) => h("Text", props, String(text));
 
 const W = 360;
 const CARD_W = 312;                 // 336 card - 2 * 12 padding
-const PIXELX = "data:image/png;base64,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";
 const svg = paths =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 const XMARK = svg(`<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231z" fill="currentColor" stroke="none"/>`);
+const VERIFIED = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81C14.67 2.63 13.43 1.75 12 1.75s-2.67.88-3.34 2.19c-1.39-.46-2.9-.2-3.91.81s-1.27 2.52-.81 3.91C2.63 9.33 1.75 10.57 1.75 12s.88 2.67 2.19 3.34c-.46 1.39-.2 2.9.81 3.91s2.52 1.27 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.67-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg>`;
+
 const ICON = {
   x: XMARK,
+  verified: VERIFIED,
   refresh: svg(`<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>`),
   external: svg(`<path d="M7 7h10v10"/><path d="M7 17 17 7"/>`),
   alert: svg(`<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>`),
-  check: svg(`<path d="M20 6 9 17l-5-5"/>`),
 };
 const Icon = (name, size, color, extra) =>
   h("Icon", { svg: ICON[name], ...extra,
     tw: `size-[${size || 14}px] text-${color || "textMuted"} shrink-0 ${extra && extra.tw || ""}` });
 
-// ---------------------------------------------------------------------------
-// 5x7 dot matrix with visible 1-2 DIP gaps, so every stroke reads as cells.
-// ---------------------------------------------------------------------------
-
-const GLYPH = {
+// 5x7 dot matrix: the follower count, labels and stat values share one font.
+const DOT = {
   "0": ["01110", "10001", "10011", "10101", "11001", "10001", "01110"],
   "1": ["00100", "01100", "00100", "00100", "00100", "00100", "01110"],
   "2": ["01110", "10001", "00001", "00010", "00100", "01000", "11111"],
@@ -62,67 +60,106 @@ const GLYPH = {
   "7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
   "8": ["01110", "10001", "10001", "01110", "10001", "10001", "01110"],
   "9": ["01110", "10001", "10001", "01111", "00001", "00010", "01100"],
-  ".": ["00000", "00000", "00000", "00000", "00000", "01100", "01100"],
-  K: ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
-  M: ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+  A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
   B: ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
+  C: ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
+  D: ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+  E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+  F: ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+  G: ["01110", "10001", "10000", "10111", "10001", "10001", "01111"],
+  H: ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+  I: ["01110", "00100", "00100", "00100", "00100", "00100", "01110"],
+  J: ["00111", "00010", "00010", "00010", "00010", "10010", "01100"],
+  K: ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
+  L: ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+  M: ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+  N: ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+  O: ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+  P: ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+  Q: ["01110", "10001", "10001", "10001", "10101", "10010", "01101"],
+  R: ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+  S: ["01111", "10000", "10000", "01110", "00001", "00001", "01110"],
+  T: ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+  U: ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
+  V: ["10001", "10001", "10001", "10001", "10001", "01010", "00100"],
+  W: ["10001", "10001", "10001", "10101", "10101", "11011", "10001"],
+  X: ["10001", "10001", "01010", "00100", "01010", "10001", "10001"],
+  Y: ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
+  Z: ["11111", "00001", "00010", "00100", "01000", "10000", "11111"],
+  ".": ["00000", "00000", "00000", "00000", "00000", "00000", "00100"],
+  ",": ["00000", "00000", "00000", "00000", "00000", "00100", "01000"],
+  ":": ["00000", "00100", "00100", "00000", "00100", "00100", "00000"],
+  "/": ["00001", "00010", "00010", "00100", "01000", "01000", "10000"],
   "+": ["00000", "00100", "00100", "11111", "00100", "00100", "00000"],
   "-": ["00000", "00000", "00000", "11111", "00000", "00000", "00000"],
+  "%": ["11001", "11010", "00100", "00100", "01000", "01011", "10011"],
+  "@": ["01110", "10001", "10111", "10101", "10111", "10000", "01110"],
+  "!": ["00100", "00100", "00100", "00100", "00100", "00000", "00100"],
+  "?": ["01110", "10001", "00001", "00010", "00100", "00000", "00100"],
+  "(": ["00010", "00100", "01000", "01000", "01000", "00100", "00010"],
+  ")": ["01000", "00100", "00010", "00010", "00010", "00100", "01000"],
+  "#": ["01010", "01010", "11111", "01010", "11111", "01010", "01010"],
+  "*": ["00000", "10101", "01110", "11111", "01110", "10101", "00000"],
+  "=": ["00000", "00000", "11111", "00000", "11111", "00000", "00000"],
+  "_": ["00000", "00000", "00000", "00000", "00000", "00000", "11111"],
+  "|": ["00100", "00100", "00100", "00100", "00100", "00100", "00100"],
 };
 
-function dotMatrix(text, maxWidth, maxScale, color) {
-  const n = text.length;
-  const scale = Math.max(4, Math.min(maxScale || 10, Math.floor(maxWidth / (6 * n - 1))));
-  const gap = scale >= 8 ? 2 : 1;
-  const block = scale - gap;
-  const commands = [];
-  for (let i = 0; i < n; i++) {
-    const rows = GLYPH[text[i]];
+const DOT_POINT_LIMIT = 60000;
+let dotPoints = 0;
+const chargeDots = n => {
+  if (dotPoints + n > DOT_POINT_LIMIT) return false;
+  dotPoints += n;
+  return true;
+};
+
+const dotCell = scale => ({ gap: scale >= 7 ? 2 : 1, cell: scale - (scale >= 7 ? 2 : 1) });
+
+function dotMetrics(text, scale) {
+  const { gap } = dotCell(scale);
+  const n = String(text).length;
+  if (!n) return { width: 0, height: 0, gap, cell: scale - gap };
+  return { width: (6 * n - 1) * scale - gap, height: 7 * scale - gap, gap, cell: scale - gap };
+}
+
+function dotText(text, scale, color) {
+  const s = String(text);
+  const m = dotMetrics(s, scale);
+  const path = [];
+  for (let i = 0; i < s.length; i++) {
+    const rows = DOT[s[i]] || DOT[s[i].toUpperCase()];
     if (!rows) continue;
     for (let r = 0; r < 7; r++) {
       for (let c = 0; c < 5; c++) {
         if (rows[r][c] !== "1") continue;
-        commands.push({ op: "rect", color: color || "text",
-          rect: { x: i * 6 * scale + c * scale, y: r * scale, width: block, height: block } });
+        const x = i * 6 * scale + c * scale;
+        const y = r * scale;
+        path.push(["M", x, y], ["L", x + m.cell, y], ["L", x + m.cell, y + m.cell],
+          ["L", x, y + m.cell], ["Z"]);
       }
     }
   }
-  return { commands, width: n * 6 * scale - scale, height: 7 * scale };
+  return { width: m.width, height: m.height,
+    commands: path.length ? [{ op: "path", path, color: color || "text", width: 0 }] : [] };
 }
 
-function dither(width, height, color) {
-  const commands = [];
-  for (let x = 0; x + 3 <= width; x += 6)
-    commands.push({ op: "rect", color: color || "border", rect: { x, y: 0, width: 3, height } });
-  return commands;
+function fitDot(text, maxWidth, scale) {
+  let s = String(text);
+  if (dotMetrics(s, scale).width <= maxWidth) return s;
+  while (s.length > 1 && dotMetrics(s + "..", scale).width > maxWidth) s = s.slice(0, -1);
+  return s + "..";
 }
 
-// Blocky bar chart: chunky filled columns on a dotted baseline, up to 14 days.
-function pixelBars(bars, width, height) {
-  const visible = bars.slice(-14);
-  const commands = [];
-  for (let x = 0; x < width; x += 6)
-    commands.push({ op: "rect", color: "border", rect: { x, y: Math.floor(height / 2), width: 3, height: 1 } });
-  if (!visible.length) {
-    commands.push({ op: "text", x: 0, y: Math.floor(height / 2) - 16,
-      text: "NO SAMPLES YET", size: 9, color: "textMuted" });
-    return { commands, width, height };
+function Dot(text, scale, color, props) {
+  if (text === null || text === undefined || text === "") return null;
+  const s = String(text), sc = scale || 2;
+  const d = dotText(s, sc, color);
+  if (!chargeDots(d.commands[0] ? d.commands[0].path.length : 0)) {
+    const colorTw = color && String(color).startsWith("#") ? `text-[${color}]` : `text-${color || "text"}`;
+    return TX(s, { tw: `font-mono text-[${sc >= 3 ? 14 : 10}px] ${colorTw} shrink-0`, ...props });
   }
-  const slot = Math.floor(width / visible.length);
-  const cell = Math.max(5, Math.min(20, slot - 4));
-  const step = 6, base = Math.floor(height / 2);
-  const max = visible.reduce((m, b) => Math.max(m, Math.abs(b.y)), 0) || 1;
-  const rows = Math.max(1, Math.floor((base - 2) / step));
-  visible.forEach((b, i) => {
-    const units = b.y === 0 ? 0 : Math.max(1, Math.round(Math.abs(b.y) / max * rows));
-    const x = i * slot + Math.floor((slot - cell) / 2);
-    for (let u = 0; u < units; u++) {
-      const y = b.y >= 0 ? base - 1 - (u + 1) * step + 1 : base + 1 + u * step;
-      commands.push({ op: "rect", color: b.y >= 0 ? "accent" : "danger",
-        rect: { x, y, width: cell, height: cell } });
-    }
-  });
-  return { commands, width, height };
+  return h("Canvas", { width: d.width, height: d.height, commands: d.commands,
+    label: s, ignoreInput: true, tw: "shrink-0", ...props });
 }
 
 // ---------------------------------------------------------------------------
@@ -160,6 +197,10 @@ let error = "";
 let loading = false;
 let loadedAt = 0;
 let inflight = null;
+let anim = {};
+let animTimer = null;
+const ANIM_MS = 650;
+const nowMs = () => (globalThis.performance && performance.now ? performance.now() : Date.now());
 
 function parseUsers(raw) {
   const seen = new Set();
@@ -183,6 +224,32 @@ function sync(env) {
   inputErr = next.length ? "" : "在输入里填写至少一个 X 账号";
   rows = next.map(t => ({ handle: t.handle, data: null, error: "" }));
   error = ""; loadedAt = 0;
+  anim = {};
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+}
+
+function displayFollowers(key, target) {
+  const a = anim[key];
+  if (!a) return target;
+  const t = Math.min(1, (nowMs() - a.start) / ANIM_MS);
+  const eased = 1 - Math.pow(1 - t, 3);
+  return a.from + (a.to - a.from) * eased;
+}
+
+function startAnimTimer() {
+  if (animTimer) return;
+  const tick = () => {
+    const now = nowMs();
+    let active = false;
+    for (const k of Object.keys(anim)) {
+      if (now - anim[k].start >= ANIM_MS) delete anim[k];
+      else active = true;
+    }
+    try { $metrix.invalidate(); } catch (e) {}
+    if (active) animTimer = setTimeout(tick, 33);
+    else animTimer = null;
+  };
+  animTimer = setTimeout(tick, 33);
 }
 
 // ---------------------------------------------------------------------------
@@ -208,14 +275,7 @@ function trendFor(handleKey, followers) {
   const cutoff = dayKey(Date.now() - 7 * 864e5);
   const base = days.find(d => d >= cutoff && d < today);
   const delta = base ? followers - log[base] : null;
-  const series = days.map(d => log[d]);
-  const bars = [];
-  for (let i = 1; i < series.length; i++) {
-    const change = series[i] - series[i - 1];
-    bars.push({ x: i - 1, y: change, label: days[i],
-      valueLabel: (change > 0 ? "+" : "") + comma(change) + " 粉丝" });
-  }
-  return { bars, delta };
+  return { delta, labels: days, series: days.map(d => log[d]) };
 }
 
 // ---------------------------------------------------------------------------
@@ -272,7 +332,23 @@ function refresh() {
   inflight = load()
     .then(res => {
       if (t !== target) return;
+      const prev = new Map(rows.map(r => [r.handle.toLowerCase(), r.data ? r.data.followers : null]));
       rows = res;
+      let changed = false;
+      for (const r of res) {
+        if (!r.data) continue;
+        const k = r.handle.toLowerCase();
+        const before = prev.get(k);
+        if (before === null || before === undefined) {
+          const from = Math.max(0, r.data.followers - Math.max(1, Math.round(r.data.followers * 0.12)));
+          anim[k] = { from, to: r.data.followers, start: nowMs() };
+          changed = true;
+        } else if (before !== r.data.followers) {
+          anim[k] = { from: before, to: r.data.followers, start: nowMs() };
+          changed = true;
+        }
+      }
+      if (changed) startAnimTimer();
       const failed = res.filter(r => r.error);
       error = failed.length === res.length ? failed[0].error
         : failed.length ? failed.map(r => "@" + r.handle + " 刷新失败").join("；") : "";
@@ -308,14 +384,15 @@ function hookTheme() {
   } catch (e) {}
 }
 
-const cardBorder = () => (isDarkTheme() ? "[#ffffff12]" : "[#00000010]");
+const cardBorder = () => (isDarkTheme() ? "[#ffffff22]" : "[#00000018]");
+const primaryBorder = () => (isDarkTheme() ? "[#4a9eff66]" : "[#4a9eff80]");
+const dotLabelColor = () => (isDarkTheme() ? "#a8adb5" : "#6b7280");
 const K = { muted: "textMuted", hover: "surfaceHover", press: "surfacePressed",
-  line: "border", up: "success", down: "danger", accent: "accent" };
-const LABEL = "font-mono text-[9px] tracking-[1.5px]";
+  up: "success", down: "danger", accent: "accent" };
 
 function IconButton(name, label, onClick, busy) {
   return h("Column", {
-    tw: "w-6 h-6 items-center justify-center shrink-0 cursor-pointer",
+    tw: "w-6 h-6 items-center justify-center shrink-0 cursor-pointer rounded-full",
     hover: { background: K.hover }, pressed: { background: K.press },
     label, tooltip: label, onClick,
   }, Icon(name, 14, K.muted, busy ? { keyframes: { duration: 900, repeat: -1, ease: "linear",
@@ -324,114 +401,139 @@ function IconButton(name, label, onClick, busy) {
 
 function Header() {
   return h("Column", { tw: "w-full" },
-    h("Row", { tw: "gap-2 py-3 px-3 items-center w-full min-w-0" },
+    h("Row", { tw: "gap-2 py-2.5 px-3 items-center w-full min-w-0" },
       Icon("x", 15, "text"),
-      TX("STEVE FANS", { tw: "font-mono text-[11px] font-semibold tracking-[2px] truncate min-w-0" }),
+      TX("SteveFans", { tw: "text-[12.5px] font-semibold tracking-[0.2px] truncate min-w-0" }),
       h("Spacer"),
       TX(loadedAt ? ago(loadedAt) : "", { tw: "font-mono text-[9px] text-textMuted tabular-nums shrink-0" }),
       target.length ? IconButton("refresh", "刷新", launchRefresh, loading) : null,
       IconButton("external", "在 X 打开",
         open(rows.find(r => r.data) ? rows.find(r => r.data).data.url : "https://x.com"))),
-    h("Canvas", { width: W, height: 2, commands: dither(W, 2, "border"), label: "" }));
+    h("Box", { tw: "h-px w-full bg-border" }));
 }
 
 function Problem(title, detail) {
   return h("Column", { tw: "grow items-center justify-center gap-2 py-6 px-8" },
     Icon("alert", 20, K.down),
-    TX(title, { tw: "font-mono text-xs font-semibold text-center tracking-[1px]" }),
-    TX(detail, { tw: "font-mono text-[10px] text-textMuted text-center leading-[1.5] max-w-[260px]" }));
+    Dot(title, 3, "text"),
+    TX(detail, { tw: "text-[10px] text-textMuted text-center leading-[1.5] max-w-[260px]" }));
 }
 
 function DeltaChip(delta) {
   if (delta === null) return null;
-  const color = delta > 0 ? K.up : delta < 0 ? K.down : K.muted;
-  return h("Row", { tw: "gap-1 items-center py-0.5 px-1.5 rounded-[2px] bg-surfaceHover shrink-0" },
-    TX((delta > 0 ? "+" : "") + comma(delta),
-      { tw: `font-mono text-[10px] font-semibold tabular-nums text-${color}` }),
-    TX("7D", { tw: "font-mono text-[9px] text-textMuted" }));
+  const up = delta > 0, down = delta < 0;
+  const color = up ? (isDarkTheme() ? "#86efac" : "#0a7f3f")
+    : down ? (isDarkTheme() ? "#f87171" : "#b91c1c") : K.muted;
+  const bg = up ? (isDarkTheme() ? "bg-[#86efac14]" : "bg-[#0a7f3f0f]")
+    : down ? (isDarkTheme() ? "bg-[#f8717114]" : "bg-[#b91c1c0f]") : "bg-surfaceHover";
+  return h("Row", { tw: `gap-1.5 items-center shrink-0 py-0.5 px-1.5 rounded-full ${bg}`, transition: { duration: 200, ease: "easeInOut" } },
+    Dot((delta > 0 ? "+" : "") + comma(delta), 2.25, color),
+    Dot("7D", 2.25, K.muted));
 }
 
-function StatCell(label, value) {
-  return h("Column", { tw: "gap-0.5 grow items-center min-w-0" },
-    TX(label, { tw: "font-mono text-[8.5px] tracking-[1.2px] text-textMuted" }),
-    TX(value, { tw: "font-mono text-[14px] font-semibold tabular-nums" }));
+function StatCell(label, value, minWidth) {
+  return h("Column", { tw: `gap-2.5 grow items-center min-w-[${minWidth}px]` },
+    Dot(label, 2, dotLabelColor()),
+    Dot(value, 3, "text", { transition: { duration: 200, ease: "easeInOut" } }));
 }
 
-const vrule = () => h("Box", { tw: "w-px self-stretch bg-border" });
-
-function PixelCard(row, primary) {
+function MetricCard(row, primary) {
   const u = row.data;
-  const t = trendFor(row.handle.toLowerCase(), u.followers);
-  const dots = dotMatrix(heroNumber(u.followers), 300, 10, "text");
-  const bars = pixelBars(t.bars, CARD_W, 38);
+  const key = row.handle.toLowerCase();
+  const t = trendFor(key, u.followers);
+  const enough = t.series.length >= 2;
+  const shown = Math.round(displayFollowers(key, u.followers));
+  const hero = Dot(heroNumber(shown), 7, "text", { label: comma(u.followers) + " 粉丝" });
   return h("Column", {
-      tw: `p-3 gap-2.5 w-full min-w-0 border bg-background ${primary ? "border-accent" : "border-" + cardBorder()}`,
-      key: row.handle },
+      tw: `p-3 gap-2 w-full min-w-0 border rounded-xl shadow-sm ${primary ? (isDarkTheme() ? "bg-[#4a9eff14]" : "bg-[#4a9eff0d]") + " border-" + primaryBorder() : "bg-surface border-" + cardBorder()}`,
+      key: row.handle,
+      transition: { duration: 300, ease: "easeInOut" } },
     h("Row", { tw: "gap-2.5 items-center w-full min-w-0" },
-      h("Avatar", { src: u.avatar, name: u.name, width: 36, height: 36,
+      h("Avatar", { src: u.avatar, name: u.name, width: 34, height: 34,
         tw: "shrink-0 border border-" + cardBorder(), label: "@" + u.handle }),
       h("Column", { tw: "gap-0.5 min-w-0 grow" },
         h("Row", { tw: "gap-1 items-center min-w-0" },
-          TX(u.name, { tw: "text-[13px] font-semibold truncate min-w-0" }),
-          u.verified ? Icon("check", 11, K.accent) : null),
+          TX(u.name, { tw: "text-[12.5px] font-semibold truncate min-w-0" }),
+          u.verified ? Icon("verified", 12, K.accent) : null),
         TX("@" + u.handle, { tw: "font-mono text-[10px] text-textMuted truncate" })),
-      DeltaChip(t.delta),
-      h("Row", { tw: "w-6 h-6 items-center justify-center shrink-0 cursor-pointer",
-          hover: { background: K.hover },
+      h("Row", { tw: "w-6 h-6 items-center justify-center shrink-0 cursor-pointer rounded-full",
+          hover: { background: K.hover }, pressed: { background: K.press },
           label: "在 X 打开 @" + u.handle, tooltip: "在 X 打开", onClick: open(u.url) },
-        Icon("external", 13, K.muted))),
-    h("Column", { tw: "gap-1 w-full min-w-0" },
-      TX("FOLLOWERS", { tw: "font-mono text-[9px] tracking-[1.5px] text-textMuted" }),
-      h("Canvas", { width: dots.width, height: dots.height, commands: dots.commands,
-        label: comma(u.followers) + " 粉丝" })),
+        Icon("x", 13, "text"))),
+    h("Column", { tw: "gap-1.5 w-full min-w-0" },
+      h("Row", { tw: "gap-2 items-center w-full min-w-0" },
+        Dot("FOLLOWERS", 2, dotLabelColor()),
+        h("Spacer"),
+        DeltaChip(t.delta)),
+      hero),
     h("Box", { tw: "h-px w-full bg-border" }),
-    h("Row", { tw: "gap-2 items-center w-full min-w-0" },
-      StatCell("FOLLOWING", compact(u.following)),
-      vrule(),
-      StatCell("POSTS", compact(u.tweets)),
-      vrule(),
-      StatCell("JOINED", u.joined || "—")),
-    t.bars.length
-      ? h("Column", { tw: "gap-1 w-full min-w-0" },
-          TX("TREND", { tw: "font-mono text-[9px] tracking-[1.5px] text-textMuted" }),
-          h("Canvas", { width: bars.width, height: bars.height, commands: bars.commands,
-            label: "每日粉丝涨跌" }))
-      : h("Row", { tw: "gap-1.5 items-center w-full min-w-0" },
-          TX("TREND", { tw: "font-mono text-[9px] tracking-[1.5px] text-textMuted" }),
-          TX("从今天开始采样", { tw: "font-mono text-[10px] text-textMuted" })));
+    h("Row", { tw: "gap-4 items-center w-full min-w-0" },
+      StatCell("FOLLOWING", compact(u.following), 105),
+      StatCell("POSTS", compact(u.tweets), 86),
+      StatCell("JOINED", u.joined || "--", 69)),
+    enough
+      ? h("Chart", {
+          type: "area",
+          width: CARD_W,
+          height: 44,
+          axes: false,
+          grid: false,
+          hover: false,
+          appear: false,
+          legend: false,
+          xKind: "category",
+          strokeWidth: 1.5,
+          theme: { colors: ["accent"] },
+          series: [{ name: "Followers", color: "accent",
+            fill: { from: 0.2, to: 0.01 },
+            points: t.series.map((v, i) => ({ x: i, y: v, label: t.labels[i],
+              valueLabel: comma(v) + " 粉丝" })) }]
+        })
+      : h("Row", { tw: "w-full h-[36px] items-center justify-center gap-2" },
+          h("Box", { tw: "grow h-px bg-border" }),
+          Dot("TREND", 2, dotLabelColor()),
+          TX("从今天开始采样", { tw: "text-[10px] text-textMuted shrink-0" }),
+          h("Box", { tw: "grow h-px bg-border" })));
 }
 
 function Card(row, primary) {
   if (!row.data) {
     return h("Column", {
-        tw: `p-3 gap-1.5 w-full min-w-0 border bg-background ${primary ? "border-accent" : "border-" + cardBorder()}`,
+        tw: `p-3 gap-2 w-full min-w-0 border rounded-xl shadow-sm bg-surface ${primary ? "bg-accentSubtle border-" + primaryBorder() : "border-" + cardBorder()}`,
         key: row.handle },
       h("Row", { tw: "gap-1.5 items-center min-w-0" },
         Icon("alert", 12, K.down),
-        TX("@" + row.handle, { tw: "font-mono text-[11px] font-medium truncate min-w-0" })),
+        Dot(fitDot("@" + row.handle, 260, 2.25), 2.25, "text", { label: "@" + row.handle })),
       TX(row.error || "还没有数据", { tw: "font-mono text-[10px] text-textMuted leading-[1.4]" }));
   }
-  return PixelCard(row, primary);
+  return MetricCard(row, primary);
 }
 
 function Skeleton() {
-  const block = () => h("Column", { tw: `p-3 gap-3 w-full border border-${cardBorder()}` },
+  const block = () => h("Column", { tw: `p-3 gap-2 w-full border rounded-xl shadow-sm bg-surface border-${cardBorder()}` },
     h("Row", { tw: "gap-2.5 items-center" },
-      h("Box", { tw: "w-9 h-9 bg-surfaceHover shrink-0" }),
-      h("Column", { tw: "gap-1.5" },
-        h("Box", { tw: "w-[120px] h-3 bg-surfaceHover" }),
-        h("Box", { tw: "w-[80px] h-2 bg-surfaceHover" }))),
-    h("Box", { tw: "w-[240px] h-14 bg-surfaceHover" }));
+      h("Box", { tw: "w-8 h-8 rounded-full bg-surfaceHover shrink-0" }),
+      h("Column", { tw: "gap-1.5 grow" },
+        h("Box", { tw: "w-[120px] h-3 rounded-[2px] bg-surfaceHover" }),
+        h("Box", { tw: "w-[80px] h-2 rounded-[2px] bg-surfaceHover" }))),
+    h("Box", { tw: "w-[190px] h-10 rounded-[4px] bg-surfaceHover" }),
+    h("Box", { tw: "h-px w-full bg-border" }),
+    h("Row", { tw: "gap-2 w-full" },
+      [0, 1, 2].map(() => h("Column", { tw: "gap-1 grow items-center" },
+        h("Box", { tw: "w-12 h-2 rounded-[2px] bg-surfaceHover" }),
+        h("Box", { tw: "w-10 h-3 rounded-[2px] bg-surfaceHover" })))),
+    h("Box", { tw: "w-full h-[38px] rounded-[4px] bg-surfaceHover" }));
   return h("Column", { tw: "gap-3" }, [0, 1].map(block));
 }
 
 function Banner() {
-  return h("Row", { tw: "gap-2 py-2 px-2.5 border border-danger items-center w-full min-w-0" },
+  return h("Row", { tw: "gap-2 py-2 px-2.5 border border-danger rounded-xl shadow-sm bg-surface items-center w-full min-w-0" },
     Icon("alert", 12, K.down),
+    Dot("ERROR", 2.25, K.down),
     TX(error, { tw: "font-mono text-[10px] min-w-0 shrink grow leading-[1.4]" }),
-    h("Row", { tw: "py-0.5 px-1.5 cursor-pointer shrink-0", hover: { background: K.hover },
+    h("Row", { tw: "py-0.5 px-1.5 rounded-[4px] cursor-pointer shrink-0", hover: { background: K.hover },
         label: "重试", onClick: launchRefresh },
-      TX("RETRY", { tw: "font-mono text-[9px] font-semibold tracking-[1px]" })));
+      Dot("RETRY", 2.25, "text")));
 }
 
 function Body() {
@@ -440,17 +542,17 @@ function Body() {
   if (!hasData && loading) return h("Column", { tw: "gap-3 p-3 w-full" }, Skeleton());
   if (!hasData && error) return Problem("LOAD FAILED", error);
   return h("Scroll", { tw: "grow min-h-0 w-full" },
-    h("Column", { tw: "gap-3 p-3 w-full min-w-0" },
+    h("Column", { tw: "gap-2.5 p-3 w-full min-w-0" },
       error ? Banner() : null,
-      rows.map((r, i) => Card(r, i === 0)),
-      TX("FX / LOCAL SAMPLES", { tw: "font-mono text-[9px] text-textMuted text-center tracking-[1.5px] pt-0.5" })));
+      rows.map((r, i) => Card(r, i === 0))));
 }
 
 const panelTree = () => {
   hookTheme();
+  dotPoints = 0;
   return h("Column", {
     preferredWidth: W,
-    preferredHeight: Math.min(560, 130 + Math.max(1, target.length) * 235),
+    preferredHeight: Math.min(560, 130 + Math.max(1, target.length) * 210),
     safeArea: true,
     tw: "size-full text-[13px] text-text min-w-0 min-h-0",
     shortcuts: { "CmdOrCtrl+R": launchRefresh },
