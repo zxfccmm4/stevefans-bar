@@ -7,6 +7,7 @@
 ![protocol](https://img.shields.io/badge/protocol-v0-4a9eff)
 ![dashboard](https://img.shields.io/badge/dashboard-1.12.4-4a9eff)
 ![license](https://img.shields.io/badge/license-MIT-black)
+[![release](https://img.shields.io/github/v/release/zxfccmm4/stevefans-bar?color=4a9eff&label=release)](https://github.com/zxfccmm4/stevefans-bar/releases/latest)
 
 ---
 
@@ -36,7 +37,7 @@
 
 ## 安装
 
-1. 下载仓库里的 [`stevefans.bar`](./stevefans.bar)。（Releases 里只有早期的 v1.0.0，以仓库文件为准。）
+1. 从 [最新 Release](https://github.com/zxfccmm4/stevefans-bar/releases/latest) 下载 `stevefans.bar`，或直接用仓库里的 [`stevefans.bar`](./stevefans.bar)，两者内容一致。
 2. 用 Metrix.Bar 打开它（或在看板目录里双击）。
 
 也可以用本地 API 安装：
@@ -146,7 +147,7 @@ The accounts in these screenshots are real; the trend and deltas are sample data
 - **Refresh** — every 10 minutes, plus a catch-up refresh when the panel opens after 2 minutes; `Cmd+R` for manual refresh.
 - **Errors** — a failing account only marks its own row (and shows a RETRY in the readout when selected); partial failures get a banner, total failure gets a problem page and `tray.error`.
 
-Data comes from the public `https://api.fxtwitter.com/<handle>` endpoint; avatars from `unavatar.io` (cached for 12 hours as data URIs). No keys or tokens are embedded. Install by opening `stevefans.bar` with Metrix.Bar, or POST it to `/v0/dashboards` as shown above.
+Data comes from the public `https://api.fxtwitter.com/<handle>` endpoint; avatars from `unavatar.io` (cached for 12 hours as data URIs). No keys or tokens are embedded. Install by downloading `stevefans.bar` from the [latest release](https://github.com/zxfccmm4/stevefans-bar/releases/latest) and opening it with Metrix.Bar, or POST it to `/v0/dashboards` as shown above.
 
 ## Changelog
 
