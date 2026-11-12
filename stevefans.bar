@@ -1,9 +1,9 @@
 <bar protocol-version="0"
      id="stevefans"
      title="SteveFans"
-     version="1.9.0"
+     version="1.12.1"
      category="social"
-     description="Lobe MyGo 风格的 X 粉丝看板：圆角卡片、点阵数字与标签、滚动动画、X 认证徽章和 14 天面积图。"
+     description="Lobe MyGo 风格的 X 粉丝看板：点阵标题、数字与标签，主读数加账号列表，滚动动画、X 认证徽章和 14 天面积图。"
      license="MIT"
      homepage="https://x.com/st7evechou"
      refresh="10m"
@@ -14,7 +14,7 @@
 
   <permissions>
     <network origin="https://api.fxtwitter.com" />
-    <network origin="https://pbs.twimg.com" />
+    <network origin="https://unavatar.io" />
   </permissions>
 
   <inputs>
@@ -23,25 +23,35 @@
            help="逗号或空格分隔，不要带 `@`。第一个账号决定菜单栏显示的粉丝数。" />
   </inputs>
 
-  <docs><![CDATA[Lobe MyGo 风格看板，跟随系统深浅色：浅色圆角卡片，深色圆角卡片。在 Inputs 里填写一个或多个 X 用户名（逗号或空格分隔，不带 @），数据来自公开的 FxTwitter API，头像来自 pbs.twimg.com。粉丝数、标签、统计值和涨跌使用 5×7 点阵；粉丝数首次加载和变化时播放滚动动画；X 认证使用官方认证徽章；趋势使用 14 天面积图，无数据时显示空图表，涨跌按本机每天采样，仅从首次打开看板后开始积累。]]></docs>
+  <docs><![CDATA[Lobe MyGo 风格看板，跟随系统深浅色。上方的主读数显示当前选中的账号：点阵粉丝数（首次加载和变化时滚动）、近 7 天涨跌、近 14 天面积图，以及 Following、Posts、Joined 三项。填写多个账号时，下方的账号列表逐行列出每个账号的粉丝数和涨跌，点击一行把它换到主读数，双击在 X 打开，选择会记住；菜单栏始终显示第一个账号的粉丝数。在 Inputs 里填写一个或多个 X 用户名（逗号或空格分隔，不带 @），数据来自公开的 FxTwitter API，头像经 unavatar.io 取回（pbs.twimg.com 在部分网络下不可达）。标题、粉丝数、标签、统计值和涨跌使用 5×7 点阵；X 认证使用官方认证徽章；涨跌和趋势按本机每天采样，仅从首次打开看板后开始积累，图上的横线标出 7 天涨跌的起算点。]]></docs>
 
   <script apis="localStorage shell match-media"><![CDATA[
+// SteveFans: X follower board. One selected account fills the dot-matrix
+// readout; every tracked account stays one line tall in the list below it.
+
 const h = (type, props, ...children) =>
   ({ type, props: props || {}, children: children.flat().filter(c => c !== null && c !== undefined && c !== false) });
 const TX = (text, props) => h("Text", props, String(text));
 
 const W = 360;
-const CARD_W = 312;                 // 336 card - 2 * 12 padding
 const svg = paths =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 const XMARK = svg(`<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231z" fill="currentColor" stroke="none"/>`);
 const VERIFIED = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81C14.67 2.63 13.43 1.75 12 1.75s-2.67.88-3.34 2.19c-1.39-.46-2.9-.2-3.91.81s-1.27 2.52-.81 3.91C2.63 9.33 1.75 10.57 1.75 12s.88 2.67 2.19 3.34c-.46 1.39-.2 2.9.81 3.91s2.52 1.27 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.67-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg>`;
 
+
+// The header glyphs keep the lucide silhouettes but are rasterised into
+// the same square pixel grid as the dot font: 14 cells shown at 14 DIP.
+const PIX_REFRESH =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="currentColor" shape-rendering="crispEdges"><rect x="5" y="1" width="1" height="1"/><rect x="6" y="1" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="1"/><rect x="12" y="1" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="5" y="2" width="1" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="7" y="2" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="11" y="2" width="1" height="1"/><rect x="12" y="2" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="10" y="3" width="1" height="1"/><rect x="11" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="2" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="12" y="5" width="1" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="11" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="1" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="1" y="8" width="1" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="2" y="9" width="1" height="1"/><rect x="2" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="4" y="11" width="1" height="1"/><rect x="5" y="11" width="1" height="1"/><rect x="6" y="11" width="1" height="1"/><rect x="5" y="12" width="1" height="1"/><rect x="6" y="12" width="1" height="1"/><rect x="7" y="12" width="1" height="1"/></svg>';
+const PIX_EXTERNAL =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="currentColor" shape-rendering="crispEdges"><rect x="4" y="3" width="1" height="1"/><rect x="5" y="3" width="1" height="1"/><rect x="6" y="3" width="1" height="1"/><rect x="7" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="9" y="3" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="5" y="4" width="1" height="1"/><rect x="6" y="4" width="1" height="1"/><rect x="7" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="7" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="9" y="7" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="5" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="9" y="8" width="1" height="1"/><rect x="10" y="8" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="4" y="9" width="1" height="1"/><rect x="5" y="9" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/><rect x="4" y="10" width="1" height="1"/><rect x="9" y="10" width="1" height="1"/></svg>';
+
 const ICON = {
   x: XMARK,
   verified: VERIFIED,
-  refresh: svg(`<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>`),
-  external: svg(`<path d="M7 7h10v10"/><path d="M7 17 17 7"/>`),
+  refresh: PIX_REFRESH,
+  external: PIX_EXTERNAL,
   alert: svg(`<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>`),
 };
 const Icon = (name, size, color, extra) =>
@@ -185,12 +195,14 @@ const ago = t => {
   if (s < 86400) return Math.floor(s / 3600) + "H";
   return Math.floor(s / 86400) + "D";
 };
+const clock = t => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 
 let target = [];
+let selectedKey = "";   // lowercase handle shown in the readout
 let inputErr = "";
 let rows = [];
 let error = "";
@@ -226,6 +238,25 @@ function sync(env) {
   error = ""; loadedAt = 0;
   anim = {};
   if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+  selectedKey = pickSelected(next);
+}
+
+// The readout follows the last account picked in the list, falling back to
+// the first one when that account is no longer tracked.
+function pickSelected(list) {
+  let saved = "";
+  try { saved = localStorage.getItem("selected") || ""; } catch (e) {}
+  return list.some(t => t.key === saved) ? saved : list.length ? list[0].key : "";
+}
+
+function selectedRow() {
+  return rows.find(r => r.handle.toLowerCase() === selectedKey) || rows[0] || null;
+}
+
+function selectAccount(key) {
+  if (key === selectedKey) return;
+  selectedKey = key;
+  try { localStorage.setItem("selected", key); } catch (e) {}
 }
 
 function displayFollowers(key, target) {
@@ -275,12 +306,62 @@ function trendFor(handleKey, followers) {
   const cutoff = dayKey(Date.now() - 7 * 864e5);
   const base = days.find(d => d >= cutoff && d < today);
   const delta = base ? followers - log[base] : null;
-  return { delta, labels: days, series: days.map(d => log[d]) };
+  const recent = days.slice(-14);
+  return { delta, base: base ? log[base] : null, labels: recent, series: recent.map(d => log[d]) };
 }
 
 // ---------------------------------------------------------------------------
 // FxTwitter API
 // ---------------------------------------------------------------------------
+
+// pbs.twimg.com is unreachable under some proxy/TUN setups. Avatars are
+// fetched once from unavatar.io, converted to a data URI and cached in
+// localStorage, so later refreshes and network outages still show the photo.
+const AVATAR_BASE = "https://unavatar.io/x/";
+const AVATAR_TTL = 12 * 60 * 60 * 1000;
+const AVATAR_MAX = 1024 * 1024;
+const avatarMem = Object.create(null);
+
+function avatarEntry(handle) {
+  const mem = avatarMem[handle];
+  if (mem && mem.src) return mem;
+  try {
+    const raw = JSON.parse(localStorage.getItem("avatar:" + handle) || "null");
+    if (raw && raw.src) { avatarMem[handle] = raw; return raw; }
+  } catch (e) {}
+  return null;
+}
+function avatarSeed(handle) {
+  const e = avatarEntry(handle);
+  return e ? e.src : "";
+}
+async function resolveAvatar(handle) {
+  const old = avatarEntry(handle);
+  if (old && Date.now() - (old.at || 0) < AVATAR_TTL) return old.src;
+  const grab = (async () => {
+    const r = await fetch(AVATAR_BASE + encodeURIComponent(handle));
+    if (!r.ok) return null;
+    const bytes = new Uint8Array(await r.arrayBuffer());
+    if (!bytes.length || bytes.length > AVATAR_MAX) return null;
+    const ct = (r.headers && r.headers.get && r.headers.get("content-type")) || "";
+    const m = ct.match(/^image\/(png|jpeg|gif|webp)/i);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 8192)
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    return { src: "data:" + (m ? "image/" + m[1].toLowerCase() : "image/jpeg") + ";base64," + btoa(bin), at: Date.now() };
+  })().catch(() => null);
+  let timer = null;
+  try {
+    const entry = await Promise.race([grab, new Promise(res => { timer = setTimeout(() => res(null), 7000); })]);
+    if (timer) clearTimeout(timer);
+    if (entry) {
+      avatarMem[handle] = entry;
+      try { localStorage.setItem("avatar:" + handle, JSON.stringify(entry)); } catch (e) {}
+      return entry.src;
+    }
+  } catch (e) { if (timer) clearTimeout(timer); }
+  return old ? old.src : "";
+}
 
 function readUser(body, handle) {
   if (!body || typeof body !== "object") throw new Error("接口返回了无法解析的内容");
@@ -293,7 +374,7 @@ function readUser(body, handle) {
     handle: String(u.screen_name || handle),
     name: String(u.name || u.screen_name || handle),
     followers: u.followers, following: u.following, tweets: u.tweets,
-    avatar: String(u.avatar_url || "").replace(/_(normal|bigger|mini)\.(jpg|jpeg|png|webp)$/i, "_200x200.$2"),
+    avatar: avatarSeed(handle),
     verified: !!(u.verification && u.verification.verified === true),
     joined: (String(u.joined || "").match(/\b(\d{4})\s*$/) || [, ""])[1],
     url: "https://x.com/" + encodeURIComponent(u.screen_name || handle),
@@ -334,6 +415,16 @@ function refresh() {
       if (t !== target) return;
       const prev = new Map(rows.map(r => [r.handle.toLowerCase(), r.data ? r.data.followers : null]));
       rows = res;
+      for (const acct of t) {
+        resolveAvatar(acct.handle).then(src => {
+          if (!src || t !== target) return;
+          const row = rows.find(r => r.handle === acct.handle);
+          if (row && row.data && row.data.avatar !== src) {
+            row.data.avatar = src;
+            try { $metrix.invalidate(); } catch (e) {}
+          }
+        }).catch(() => {});
+      }
       let changed = false;
       for (const r of res) {
         if (!r.data) continue;
@@ -361,8 +452,8 @@ const launchRefresh = () => { void refresh(); };
 const open = url => () => { if (url) $metrix.openURL(url); };
 
 // ---------------------------------------------------------------------------
-// Theme: semantic tokens from the host theme, alpha card borders in the same
-// style as the official Tokens dashboard (isDarkTheme + [#ffffff12] / [#00000010]).
+// Theme: semantic tokens from the host, plus the few alpha inks that 1 DIP
+// dots need to stay readable in both appearances.
 // ---------------------------------------------------------------------------
 
 let themeHooked = false;
@@ -384,167 +475,240 @@ function hookTheme() {
   } catch (e) {}
 }
 
-const cardBorder = () => (isDarkTheme() ? "[#ffffff22]" : "[#00000018]");
-const primaryBorder = () => (isDarkTheme() ? "[#4a9eff66]" : "[#4a9eff80]");
-const dotLabelColor = () => (isDarkTheme() ? "#a8adb5" : "#6b7280");
-const K = { muted: "textMuted", hover: "surfaceHover", press: "surfacePressed",
-  up: "success", down: "danger", accent: "accent" };
+const K = { muted: "textMuted", down: "danger", accent: "accent" };
+const ink = {
+  label: () => (isDarkTheme() ? "#a8adb5" : "#6b7280"),
+  up: () => (isDarkTheme() ? "#86efac" : "#0a7f3f"),
+  down: () => (isDarkTheme() ? "#f87171" : "#b91c1c"),
+};
+const tint = {
+  up: () => (isDarkTheme() ? "bg-[#86efac14]" : "bg-[#0a7f3f0f]"),
+  down: () => (isDarkTheme() ? "bg-[#f8717114]" : "bg-[#b91c1c0f]"),
+  selected: () => (isDarkTheme() ? "bg-[#4a9eff24]" : "bg-[#4a9eff1a]"),
+};
+const edge = () => (isDarkTheme() ? "[#ffffff22]" : "[#00000018]");
+
+// Tight corners and hairlines keep the chrome on the same grid as the dots.
+const card = () => `w-full min-w-0 p-3 gap-3 rounded-[6px] bg-surface border border-${edge()}`;
+
+// ---------------------------------------------------------------------------
+// Components
+// ---------------------------------------------------------------------------
+
+const bone = (w, hgt, extra) => h("Box", { ...extra,
+  tw: `w-[${w}px] h-[${hgt}px] rounded-[3px] bg-surfaceHover shrink-0 ${extra && extra.tw || ""}` });
 
 function IconButton(name, label, onClick, busy) {
   return h("Column", {
-    tw: "w-6 h-6 items-center justify-center shrink-0 cursor-pointer rounded-full",
-    hover: { background: K.hover }, pressed: { background: K.press },
+    tw: "w-6.5 h-6.5 items-center justify-center shrink-0 cursor-pointer rounded-[4px] hover:bg-surfaceHover pressed:bg-surfacePressed",
     label, tooltip: label, onClick,
   }, Icon(name, 14, K.muted, busy ? { keyframes: { duration: 900, repeat: -1, ease: "linear",
     frames: [{ at: 0, rotate: 0 }, { at: 1, rotate: 360 }] } } : null));
 }
 
+// The panel's few text actions are set in the dot font as well.
+function DotButton(text, label, onClick) {
+  return h("Row", {
+    tw: "py-1.5 px-2 items-center shrink-0 cursor-pointer rounded-[4px] bg-surfaceHover hover:bg-surfacePressed",
+    label, tooltip: label, onClick,
+  }, Dot(text, 2.25, "text"));
+}
+
 function Header() {
+  const row = selectedRow();
+  const handle = row ? (row.data ? row.data.handle : row.handle) : "";
+  const url = row && row.data ? row.data.url : handle ? "https://x.com/" + encodeURIComponent(handle) : "https://x.com";
   return h("Column", { tw: "w-full" },
     h("Row", { tw: "gap-2 py-2.5 px-3 items-center w-full min-w-0" },
-      Icon("x", 15, "text"),
-      TX("SteveFans", { tw: "text-[12.5px] font-semibold tracking-[0.2px] truncate min-w-0" }),
+      Icon("x", 24, "text"),
+      Dot("SteveFans", 3, "text"),
       h("Spacer"),
-      TX(loadedAt ? ago(loadedAt) : "", { tw: "font-mono text-[9px] text-textMuted tabular-nums shrink-0" }),
+      loadedAt ? h("Row", { tw: "items-center shrink-0", tooltip: "最后更新 " + clock(loadedAt) },
+        Dot(ago(loadedAt), 2, ink.label())) : null,
       target.length ? IconButton("refresh", "刷新", launchRefresh, loading) : null,
-      IconButton("external", "在 X 打开",
-        open(rows.find(r => r.data) ? rows.find(r => r.data).data.url : "https://x.com"))),
-    h("Box", { tw: "h-px w-full bg-border" }));
+      IconButton("external", handle ? "在 X 打开 @" + handle : "打开 X", open(url))),
+    h("Divider"));
 }
 
-function Problem(title, detail) {
-  return h("Column", { tw: "grow items-center justify-center gap-2 py-6 px-8" },
+function Problem(title, detail, retry) {
+  return h("Column", { tw: "grow items-center justify-center gap-3 py-6 px-8 min-w-0" },
     Icon("alert", 20, K.down),
     Dot(title, 3, "text"),
-    TX(detail, { tw: "text-[10px] text-textMuted text-center leading-[1.5] max-w-[260px]" }));
-}
-
-function DeltaChip(delta) {
-  if (delta === null) return null;
-  const up = delta > 0, down = delta < 0;
-  const color = up ? (isDarkTheme() ? "#86efac" : "#0a7f3f")
-    : down ? (isDarkTheme() ? "#f87171" : "#b91c1c") : K.muted;
-  const bg = up ? (isDarkTheme() ? "bg-[#86efac14]" : "bg-[#0a7f3f0f]")
-    : down ? (isDarkTheme() ? "bg-[#f8717114]" : "bg-[#b91c1c0f]") : "bg-surfaceHover";
-  return h("Row", { tw: `gap-1.5 items-center shrink-0 py-0.5 px-1.5 rounded-full ${bg}`, transition: { duration: 200, ease: "easeInOut" } },
-    Dot((delta > 0 ? "+" : "") + comma(delta), 2.25, color),
-    Dot("7D", 2.25, K.muted));
-}
-
-function StatCell(label, value, minWidth) {
-  return h("Column", { tw: `gap-2.5 grow items-center min-w-[${minWidth}px]` },
-    Dot(label, 2, dotLabelColor()),
-    Dot(value, 3, "text", { transition: { duration: 200, ease: "easeInOut" } }));
-}
-
-function MetricCard(row, primary) {
-  const u = row.data;
-  const key = row.handle.toLowerCase();
-  const t = trendFor(key, u.followers);
-  const enough = t.series.length >= 2;
-  const shown = Math.round(displayFollowers(key, u.followers));
-  const hero = Dot(heroNumber(shown), 7, "text", { label: comma(u.followers) + " 粉丝" });
-  return h("Column", {
-      tw: `p-3 gap-2 w-full min-w-0 border rounded-xl shadow-sm ${primary ? (isDarkTheme() ? "bg-[#4a9eff14]" : "bg-[#4a9eff0d]") + " border-" + primaryBorder() : "bg-surface border-" + cardBorder()}`,
-      key: row.handle,
-      transition: { duration: 300, ease: "easeInOut" } },
-    h("Row", { tw: "gap-2.5 items-center w-full min-w-0" },
-      h("Avatar", { src: u.avatar, name: u.name, width: 34, height: 34,
-        tw: "shrink-0 border border-" + cardBorder(), label: "@" + u.handle }),
-      h("Column", { tw: "gap-0.5 min-w-0 grow" },
-        h("Row", { tw: "gap-1 items-center min-w-0" },
-          TX(u.name, { tw: "text-[12.5px] font-semibold truncate min-w-0" }),
-          u.verified ? Icon("verified", 12, K.accent) : null),
-        TX("@" + u.handle, { tw: "font-mono text-[10px] text-textMuted truncate" })),
-      h("Row", { tw: "w-6 h-6 items-center justify-center shrink-0 cursor-pointer rounded-full",
-          hover: { background: K.hover }, pressed: { background: K.press },
-          label: "在 X 打开 @" + u.handle, tooltip: "在 X 打开", onClick: open(u.url) },
-        Icon("x", 13, "text"))),
-    h("Column", { tw: "gap-1.5 w-full min-w-0" },
-      h("Row", { tw: "gap-2 items-center w-full min-w-0" },
-        Dot("FOLLOWERS", 2, dotLabelColor()),
-        h("Spacer"),
-        DeltaChip(t.delta)),
-      hero),
-    h("Box", { tw: "h-px w-full bg-border" }),
-    h("Row", { tw: "gap-4 items-center w-full min-w-0" },
-      StatCell("FOLLOWING", compact(u.following), 105),
-      StatCell("POSTS", compact(u.tweets), 86),
-      StatCell("JOINED", u.joined || "--", 69)),
-    enough
-      ? h("Chart", {
-          type: "area",
-          width: CARD_W,
-          height: 44,
-          axes: false,
-          grid: false,
-          hover: false,
-          appear: false,
-          legend: false,
-          xKind: "category",
-          strokeWidth: 1.5,
-          theme: { colors: ["accent"] },
-          series: [{ name: "Followers", color: "accent",
-            fill: { from: 0.2, to: 0.01 },
-            points: t.series.map((v, i) => ({ x: i, y: v, label: t.labels[i],
-              valueLabel: comma(v) + " 粉丝" })) }]
-        })
-      : h("Row", { tw: "w-full h-[36px] items-center justify-center gap-2" },
-          h("Box", { tw: "grow h-px bg-border" }),
-          Dot("TREND", 2, dotLabelColor()),
-          TX("从今天开始采样", { tw: "text-[10px] text-textMuted shrink-0" }),
-          h("Box", { tw: "grow h-px bg-border" })));
-}
-
-function Card(row, primary) {
-  if (!row.data) {
-    return h("Column", {
-        tw: `p-3 gap-2 w-full min-w-0 border rounded-xl shadow-sm bg-surface ${primary ? "bg-accentSubtle border-" + primaryBorder() : "border-" + cardBorder()}`,
-        key: row.handle },
-      h("Row", { tw: "gap-1.5 items-center min-w-0" },
-        Icon("alert", 12, K.down),
-        Dot(fitDot("@" + row.handle, 260, 2.25), 2.25, "text", { label: "@" + row.handle })),
-      TX(row.error || "还没有数据", { tw: "font-mono text-[10px] text-textMuted leading-[1.4]" }));
-  }
-  return MetricCard(row, primary);
-}
-
-function Skeleton() {
-  const block = () => h("Column", { tw: `p-3 gap-2 w-full border rounded-xl shadow-sm bg-surface border-${cardBorder()}` },
-    h("Row", { tw: "gap-2.5 items-center" },
-      h("Box", { tw: "w-8 h-8 rounded-full bg-surfaceHover shrink-0" }),
-      h("Column", { tw: "gap-1.5 grow" },
-        h("Box", { tw: "w-[120px] h-3 rounded-[2px] bg-surfaceHover" }),
-        h("Box", { tw: "w-[80px] h-2 rounded-[2px] bg-surfaceHover" }))),
-    h("Box", { tw: "w-[190px] h-10 rounded-[4px] bg-surfaceHover" }),
-    h("Box", { tw: "h-px w-full bg-border" }),
-    h("Row", { tw: "gap-2 w-full" },
-      [0, 1, 2].map(() => h("Column", { tw: "gap-1 grow items-center" },
-        h("Box", { tw: "w-12 h-2 rounded-[2px] bg-surfaceHover" }),
-        h("Box", { tw: "w-10 h-3 rounded-[2px] bg-surfaceHover" })))),
-    h("Box", { tw: "w-full h-[38px] rounded-[4px] bg-surfaceHover" }));
-  return h("Column", { tw: "gap-3" }, [0, 1].map(block));
+    TX(detail, { tw: "text-[11px] text-textMuted text-center leading-[1.5] max-w-[260px]" }),
+    retry ? DotButton("RETRY", "重试", launchRefresh) : null);
 }
 
 function Banner() {
-  return h("Row", { tw: "gap-2 py-2 px-2.5 border border-danger rounded-xl shadow-sm bg-surface items-center w-full min-w-0" },
+  return h("Row", { tw: `gap-2 py-1.5 pr-1.5 pl-2.5 items-center w-full min-w-0 rounded-[4px] ${tint.down()}` },
     Icon("alert", 12, K.down),
     Dot("ERROR", 2.25, K.down),
-    TX(error, { tw: "font-mono text-[10px] min-w-0 shrink grow leading-[1.4]" }),
-    h("Row", { tw: "py-0.5 px-1.5 rounded-[4px] cursor-pointer shrink-0", hover: { background: K.hover },
-        label: "重试", onClick: launchRefresh },
-      Dot("RETRY", 2.25, "text")));
+    TX(error, { tw: "text-[10.5px] min-w-0 shrink grow leading-[1.4]" }),
+    DotButton("RETRY", "重试", launchRefresh));
+}
+
+function DeltaChip(delta) {
+  if (delta === null || delta === undefined) return null;
+  const tone = delta > 0 ? "up" : delta < 0 ? "down" : "";
+  return h("Row", {
+      tw: `gap-1.5 py-0.5 px-1.5 items-center shrink-0 rounded-[3px] ${tone ? tint[tone]() : "bg-surfaceHover"}`,
+      tooltip: "近 7 天粉丝变化，按本机每天采样" },
+    Dot((delta > 0 ? "+" : "") + comma(delta), 2.25, tone ? ink[tone]() : K.muted),
+    Dot("7D", 2.25, K.muted));
+}
+
+function Identity(u) {
+  return h("Row", { tw: "gap-2.5 items-center w-full min-w-0" },
+    h("Avatar", { src: u.avatar, name: u.name, width: 34, height: 34,
+      tw: "shrink-0 border border-" + edge(), label: "@" + u.handle }),
+    h("Column", { tw: "gap-0.5 min-w-0 grow" },
+      h("Row", { tw: "gap-1 items-center min-w-0" },
+        TX(u.name, { tw: "text-[12.5px] font-semibold truncate min-w-0" }),
+        u.verified ? Icon("verified", 12, K.accent) : null),
+      TX("@" + u.handle, { tw: "font-mono text-[10px] text-textMuted truncate" })));
+}
+
+// Two weeks of local samples. The rule marks the day the 7-day delta is
+// measured from, so the chip and the chart read as one statement.
+function Trend(t) {
+  if (t.series.length < 2) {
+    return h("Row", { tw: `h-12 w-full gap-2 items-center justify-center rounded-[4px] border border-dashed border-${edge()}` },
+      Dot("TREND", 2, ink.label()),
+      TX("从今天开始采样", { tw: "text-[10px] text-textMuted shrink-0" }));
+  }
+  const props = {
+    type: "area", tw: "h-12 w-full", axes: false, grid: false, legend: false,
+    hover: true, appear: false, xKind: "category", strokeWidth: 1.5,
+    theme: { colors: ["accent"] }, label: "近 14 天粉丝趋势",
+    series: [{ name: "Followers", color: "accent", fill: { from: 0.22, to: 0.01 },
+      points: t.series.map((v, i) => ({ x: i, y: v, label: t.labels[i], valueLabel: comma(v) + " 粉丝" })) }],
+  };
+  if (t.base !== null) props.referenceLines = [{ value: t.base, label: "7D", color: K.muted }];
+  return h("Chart", props);
+}
+
+function StatCell(label, value) {
+  return h("Column", { tw: "gap-2 items-center shrink-0" },
+    Dot(label, 2, ink.label()),
+    Dot(value, 3, "text"));
+}
+
+// Three readouts sized by their own dots and spread across the card, so the
+// widest label never has to fit a fixed column.
+function StatRow(u) {
+  const rule = () => h("Box", { tw: "w-px h-7 bg-border shrink-0" });
+  return h("Row", { tw: "w-full min-w-0 items-center justify-between" },
+    StatCell("FOLLOWING", compact(u.following)),
+    rule(),
+    StatCell("POSTS", compact(u.tweets)),
+    rule(),
+    StatCell("JOINED", u.joined || "--"));
+}
+
+function HeroCard(row) {
+  const u = row.data;
+  const key = row.handle.toLowerCase();
+  const t = trendFor(key, u.followers);
+  const shown = Math.round(displayFollowers(key, u.followers));
+  const exact = comma(u.followers) + " 粉丝";
+  return h("Column", { tw: card(), key: "hero:" + key },
+    Identity(u),
+    h("Column", { tw: "gap-2 w-full min-w-0" },
+      h("Row", { tw: "gap-2 items-center w-full min-w-0" },
+        Dot("FOLLOWERS", 2, ink.label()),
+        h("Spacer"),
+        DeltaChip(t.delta)),
+      h("Row", { tw: "items-center min-w-0", tooltip: exact },
+        Dot(heroNumber(shown), 7, "text", { label: exact }))),
+    Trend(t),
+    h("Divider"),
+    StatRow(u));
+}
+
+function HeroProblem(row) {
+  return h("Column", { tw: card(), key: "hero:" + row.handle.toLowerCase() },
+    h("Row", { tw: "gap-2 items-center w-full min-w-0" },
+      Icon("alert", 14, K.down),
+      Dot(fitDot("@" + row.handle, 260, 2.25), 2.25, "text", { label: "@" + row.handle })),
+    TX(row.error || "还没有数据", { tw: "text-[11px] text-textMuted leading-[1.5] min-w-0" }),
+    h("Row", { tw: "w-full" }, DotButton("RETRY", "重试", launchRefresh)));
+}
+
+function HeroSkeleton() {
+  return h("Column", { tw: card() },
+    h("Row", { tw: "gap-2.5 items-center w-full" },
+      bone(34, 34, { tw: "rounded-full" }),
+      h("Column", { tw: "gap-1.5 grow" }, bone(120, 11), bone(76, 9))),
+    h("Column", { tw: "gap-2 w-full" },
+      bone(105, 13),
+      h("Row", { tw: "h-[47px] items-center" },
+        h("Loading", { variant: "linearDots", size: 18, color: K.muted, label: "正在加载" }))),
+    bone(0, 48, { tw: "w-full rounded-[4px]" }),
+    h("Divider"),
+    h("Row", { tw: "w-full items-center justify-between" },
+      [105, 57, 69].map(w => h("Column", { tw: "gap-2 items-center shrink-0" }, bone(w, 13), bone(44, 20)))));
+}
+
+// A row shows exact digits while they leave room for the name beside them.
+const rowCount = n => (String(Math.trunc(n)).length <= 6 ? String(Math.trunc(n)) : compact(n));
+
+function AccountRow(row, on) {
+  const key = row.handle.toLowerCase();
+  const u = row.data;
+  const t = u ? trendFor(key, u.followers) : null;
+  const delta = t && t.delta ? t.delta : 0;
+  const props = {
+    key,
+    tw: `gap-2 h-[34px] px-2 items-center w-full min-w-0 cursor-pointer rounded-[4px] ${on ? tint.selected() : "hover:bg-surfaceHover"} pressed:bg-surfacePressed`,
+    label: "@" + row.handle + (on ? "，当前显示" : ""),
+    tooltip: u ? comma(u.followers) + " 粉丝 · 双击在 X 打开" : row.error || "还没有数据",
+    onClick: () => selectAccount(key),
+  };
+  if (u) props.onDoubleClick = open(u.url);
+  return h("Row", props,
+    h("Box", { tw: `w-1.5 h-1.5 rounded-[1px] shrink-0 ${on ? "bg-accent" : "bg-border"}` }),
+    h("Avatar", { src: u ? u.avatar : "", name: u ? u.name : row.handle, width: 20, height: 20, tw: "shrink-0" }),
+    h("Row", { tw: "gap-1 items-center min-w-0 grow" },
+      TX(u ? u.name : "@" + row.handle, { tw: `text-[11.5px] truncate min-w-0 ${on ? "font-semibold" : ""}` }),
+      u && u.verified ? Icon("verified", 10, K.accent) : null),
+    delta ? Dot((delta > 0 ? "+" : "") + comma(delta), 2, delta > 0 ? ink.up() : ink.down()) : null,
+    u ? Dot(rowCount(u.followers), 3, "text", { label: comma(u.followers) + " 粉丝" })
+      : row.error ? Icon("alert", 13, K.down) : bone(44, 14));
+}
+
+// Every account stays one line tall, so the panel keeps its height however
+// many are tracked; a click moves an account into the readout above.
+function AccountsList(sel) {
+  if (rows.length < 2) return null;
+  return h("Column", { tw: "gap-1.5 w-full min-w-0" },
+    h("Row", { tw: "gap-2 px-2 items-center w-full" },
+      Dot("ACCOUNTS", 2, ink.label()),
+      h("Spacer"),
+      Dot(String(rows.length), 2, ink.label())),
+    h("Column", { tw: "gap-0.5 w-full min-w-0" }, rows.map(r => AccountRow(r, r === sel))));
 }
 
 function Body() {
   if (!target.length) return Problem("NO ACCOUNT", inputErr);
-  const hasData = rows.some(r => r.data);
-  if (!hasData && loading) return h("Column", { tw: "gap-3 p-3 w-full" }, Skeleton());
-  if (!hasData && error) return Problem("LOAD FAILED", error);
+  const loaded = rows.some(r => r.data);
+  if (!loaded && !loading && error) return Problem("LOAD FAILED", error, true);
+  const sel = selectedRow();
   return h("Scroll", { tw: "grow min-h-0 w-full" },
     h("Column", { tw: "gap-2.5 p-3 w-full min-w-0" },
-      error ? Banner() : null,
-      rows.map((r, i) => Card(r, i === 0))));
+      loaded && error ? Banner() : null,
+      !sel ? null : sel.data ? HeroCard(sel) : loading ? HeroSkeleton() : HeroProblem(sel),
+      AccountsList(sel)));
+}
+
+// The flyout is sized to what Body is about to draw, so a short state such as
+// a failed account does not leave an empty band under the content.
+function panelHeight() {
+  const loaded = rows.some(r => r.data);
+  if (!target.length || (!loaded && !loading && error)) return 300;
+  const sel = selectedRow();
+  const hero = sel && (sel.data || loading) ? 270 : 132;
+  const list = rows.length > 1 ? 27 + 36 * rows.length : 0;
+  const banner = loaded && error ? 46 : 0;
+  return 47 + 24 + hero + list + banner + 6;
 }
 
 const panelTree = () => {
@@ -552,7 +716,7 @@ const panelTree = () => {
   dotPoints = 0;
   return h("Column", {
     preferredWidth: W,
-    preferredHeight: Math.min(560, 130 + Math.max(1, target.length) * 210),
+    preferredHeight: Math.min(560, panelHeight()),
     safeArea: true,
     tw: "size-full text-[13px] text-text min-w-0 min-h-0",
     shortcuts: { "CmdOrCtrl+R": launchRefresh },

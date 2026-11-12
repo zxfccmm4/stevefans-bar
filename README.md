@@ -1,6 +1,6 @@
 # SteveFans · X 粉丝点阵看板
 
-一个 [Metrix.Bar](https://metrix.bar) 菜单栏看板：圆角卡片、5×7 点阵粉丝数、数字滚动动画、X 认证徽章和 14 天面积趋势图。
+一个 [Metrix.Bar](https://metrix.bar) 菜单栏看板：5×7 点阵读数、单行账号列表、7 天涨跌和 14 天面积趋势图。
 
 `.bar` v0 单文件看板，无构建步骤、无后端、无鉴权。
 
@@ -11,7 +11,7 @@
 
 ## 预览
 
-截图使用示例数据；本机趋势需首次打开看板后积累两天以上采样才会显示面积图。
+截图取自真实账号数据；本机趋势需首次打开看板后逐日积累，截图里尚未攒够两天，所以显示空态。
 
 | 浅色 | 深色 |
 | :---: | :---: |
@@ -21,16 +21,17 @@
 
 ## 功能
 
-- **点阵数据层**：粉丝数、FOLLOWERS / FOLLOWING / POSTS / JOINED、涨跌和错误标签都用 5×7 点阵绘制（粉丝数最大 5 DIP 方格 + 2 DIP 缝隙，标签 1 DIP 点，涨跌 1.25 DIP 点，统计值 2 DIP 点）；昵称、`@handle` 和中文提示保留原生字体。
-- **数字滚动动画**：粉丝数首次加载和数值变化时用 650ms 缓出滚动到新值；变化时同步刷新涨跌。
-- **X 认证徽章**：认证账号使用官方 X 蓝色认证徽章，而不是普通对勾。
-- **Lobe 卡片**：Block 式填充表面、12 DIP 圆角、柔和阴影和 1px 细边框；第一张卡片带淡 accent 底色；两张卡片可放进 560 DIP 面板，账号多时滚动。
-- **多账号**：`users` 输入逗号/空格分隔，每个账号一张卡片；第一个账号决定菜单栏显示的数字。
-- **账号信息**：X 头像、昵称、`@handle`、认证标识、FOLLOWING / POSTS / JOINED。
-- **趋势图**：14 天原生面积图始终显示；采样不足两天时显示空图表和“从今天开始采样”，有数据后自动切换为面积图，并显示 7 天涨跌。
-- **深浅色自适应**：使用宿主主题语义 token，卡片边框按外观使用 `#00000014` / `#ffffff1a` 的 1px alpha 描边。
+- **主读数 + 账号列表**：面板上方是一张主读数卡，显示当前选中账号的头像、昵称、认证徽章、点阵粉丝数、7 天涨跌、14 天面积图，以及 FOLLOWING / POSTS / JOINED。填写多个账号时，下方按行列出每个账号的粉丝数和涨跌。
+- **切换选中账号**：点一行把该账号换到主读数，双击在 X 打开；选择写入 `localStorage`，下次打开保持不变。菜单栏始终显示第一个账号的粉丝数。
+- **点阵数据层**：标题、粉丝数、FOLLOWERS / FOLLOWING / POSTS / JOINED、涨跌、更新时间和错误标签都用 5×7 点阵绘制；昵称、`@handle` 和中文提示保留原生字体。
+- **点阵图标**：刷新和外链图标由 lucide 轮廓光栅化成 14×14 像素网格，与点阵文字同一套方格；14 DIP 显示时 1 格对应 1 DIP。
+- **数字滚动动画**：粉丝数首次加载和数值变化时用 650ms 缓出滚动到新值。
+- **趋势图**：14 天原生面积图，可悬停查看每天的数值；横线标出 7 天涨跌的起算点。采样不足两天时显示虚线空态“从今天开始采样”。
+- **X 认证徽章**：认证账号使用官方 X 蓝色认证徽章。
+- **深浅色自适应**：跟随系统语义 token，卡片边框按外观使用 `#00000018` / `#ffffff22` 的 1px alpha 描边；涨跌色、标签色各自有浅色和深色两档。
+- **面板高度自适应**：单账号约 347 DIP，4 个账号约 518 DIP，560 DIP 以内不出现滚动。
 - **刷新策略**：静态 10 分钟轮询；打开面板且数据超过 2 分钟时补刷；`Cmd+R` 手动刷新。
-- **错误分层**：单个账号失败只影响该卡片，全部失败时显示问题页并把原因写入 `tray.error`。
+- **错误分层**：单个账号失败只影响它在列表里的那一行，选中它时主读数显示原因和 RETRY；部分失败显示顶部提示条；全部失败显示问题页并把原因写入 `tray.error`。
 
 ## 安装
 
@@ -58,32 +59,31 @@ curl -fsS -X POST "$MB/v0/dashboards" \
 ## 数据来源
 
 - 账号数据：`https://api.fxtwitter.com/<handle>`（公开接口，无需鉴权）。
-- 头像：`https://pbs.twimg.com`。
-- 趋势：仅保存在本机 `localStorage`（键名 `fans:<handle>`），不上传、不跟随 `.bar` 导出；首次打开看板后才开始积累。
+- 头像：`https://unavatar.io/x/<handle>`，取回后转成 data URI 并按 12 小时缓存（`pbs.twimg.com` 在部分代理/TUN 环境下不可达）。
+- 趋势：仅保存在本机 `localStorage`（键名 `fans:<handle>`，每天一条，保留 31 天），不上传、不跟随 `.bar` 导出；首次打开看板后才开始积累。
 
-> 只有你填写的 handle 会发给 FxTwitter；看板不包含任何 API key 或 token。
+> 只有你填写的 handle 会发给 FxTwitter 和 unavatar；看板不包含任何 API key 或 token。
 
 ## 权限
 
 ```xml
 <permissions>
   <network origin="https://api.fxtwitter.com" />
-  <network origin="https://pbs.twimg.com" />
+  <network origin="https://unavatar.io" />
 </permissions>
 ```
 
-`<script apis="localStorage shell match-media">`：本地趋势存储、打开 X 链接、跟随系统深浅色。
+`<script apis="localStorage shell match-media">`：本地趋势与头像缓存、打开 X 链接、跟随系统深浅色。
 
 ## 外观
 
 - 面板跟随即时系统外观：浅色白底黑字，深色黑底白字。
-- 第一张卡片使用淡 accent 底色 + 1px accent 边框，其余卡片使用 surface 底色和细 alpha 描边。
-- Lobe 细节：24 DIP 无边框圆形图标按钮、Tag 式涨跌胶囊、带居中标题的 1 DIP Divider；动效按 Lobe Motion token（统计值 200ms、卡片 300ms、粉丝数 650ms）。
-- 卡片结构：头像 + 昵称/`@handle` + 认证徽章 + 7 天涨跌；点阵粉丝数；点阵 FOLLOWING / POSTS / JOINED；14 天面积图。
-- 点阵数字宽度自适应：4 位 159×47、5 位 200×47、6 位 243×47（DIP），最大缩放 7。
-- 标签点阵 2× 缩放（1 DIP 点），涨跌 2.25× 缩放（1.25 DIP 点），统计值 3× 缩放（2 DIP 点），粉丝数 7× 缩放（5 DIP 点 + 2 DIP 缝隙）。
-- 粉丝数滚动动画 650ms，使用 ease-out 曲线；卡片、涨跌和统计值增加 200–300ms 过渡，首次加载从约 88% 的目标值开始，避免大数字直接跳变。
-- 趋势图高度 44 DIP，不显示坐标轴和网格，只保留 accent 面积与 1.5 DIP 线；没有数据时显示同高的空图表框。
+- 卡片：surface 底色、6 DIP 圆角、1px alpha 描边，不加阴影；读数之间用 1 DIP Divider 分隔。
+- 点阵比例：标题 3×、主读数 7×（5 DIP 方格 + 2 DIP 缝隙）、标签 2×、统计值 3×、涨跌与 ERROR/RETRY 2.25×。
+- 主读数在 6 位数字以内保持原尺寸（最宽约 245 DIP，卡片内容区 312 DIP），超过 6 位改用 `M` / `B` 紧凑写法。
+- 账号列表固定 34 DIP 行高，粉丝数 6 位以内显示精确值，更长的显示紧凑写法，保证昵称不被挤没。
+- 趋势图高度 48 DIP，不显示坐标轴和网格，只保留 accent 面积与 1.5 DIP 线，外加一条 7D 起算横线；没有数据时显示同高的虚线框。
+- 图标按钮 26 DIP、4 DIP 圆角，`hover` / `pressed` 用 surface 语义色。
 
 ## 开发与校验
 
@@ -104,6 +104,8 @@ jq -n --rawfile source stevefans.bar '{source:$source,tree:true,scheduled:true}'
 
 替换已安装版本时使用 `GET /v0/dashboards/{id}/source` 返回的 `ETag` 作为 `If-Match`。
 
+隔离检查用的是临时存储，且不推进定时器，所以面积图和涨跌不会出现、粉丝数停在滚动动画起始帧；要看这些部分得用一个注入过历史、跳过动画的副本。
+
 ## 兼容性
 
 - 在 Metrix.Bar **0.1.2**（protocol 0，macOS）上开发并验证。
@@ -117,17 +119,19 @@ jq -n --rawfile source stevefans.bar '{source:$source,tree:true,scheduled:true}'
 
 ## English
 
-A [Metrix.Bar](https://metrix.bar) dashboard with rounded Lobe cards, a 5×7 dot-matrix follower count, rolling-number animation, X verification badge and a 14-day area sparkline.
+A [Metrix.Bar](https://metrix.bar) dashboard for X follower counts: a 5×7 dot-matrix readout for the selected account, a one-line-per-account list, a 7-day delta and a 14-day area chart.
 
-Screenshots above use sample data; the local 14-day chart appears once two daily samples have accumulated.
+Screenshots use real account data; the local trend needs two daily samples before the chart appears, so they show the empty state.
 
-- **Dot-matrix data** — the follower count, labels, stats, delta and error tags are drawn with a 5×7 font; names, handles and Chinese hints stay native.
-- **Rolling numbers** — the follower count animates over 650ms on first load and whenever it changes.
-- **X verification** — verified accounts use the official X blue badge instead of a plain check.
-- **Lobe cards** — Block-style filled surface, 12 DIP radius, soft shadow and 1px border; the first card has a pale accent tint; two cards fit a 560 DIP panel.
-- **Multi-account** — comma/space-separated handles in the `users` input; the first one drives the menu bar number.
-- **Trend chart** — a 14-day native area chart is always present; before two samples it shows an empty chart, then switches to the chart with a 7-day delta.
-- **Theme aware** — semantic theme tokens plus `#00000014` / `#ffffff1a` 1px card borders, following the system appearance.
+- **Readout + list** — the card on top shows the selected account's avatar, name, badge, dot-matrix follower count, 7-day delta, 14-day chart and FOLLOWING / POSTS / JOINED. Every tracked account gets one 34 DIP row with its count and delta.
+- **Switching accounts** — click a row to move it into the readout, double-click to open it on X; the choice persists in `localStorage`. The menu bar always shows the first account.
+- **Dot matrix** — title, follower count, labels, stats, delta, freshness and error tags share one 5×7 font; names, handles and Chinese hints stay native.
+- **Pixel icons** — the refresh and external-link glyphs are the lucide paths rasterised onto a 14×14 pixel grid, one cell per DIP at 14 DIP.
+- **Rolling numbers** — the count animates over 650ms with an ease-out curve on first load and whenever it changes.
+- **Trend** — a 14-day native area chart with hover values and a rule marking the 7-day baseline; before two samples it shows a dashed empty state.
+- **Theme aware** — semantic tokens plus `#00000018` / `#ffffff22` hairline borders, with separate ink for deltas and labels in each appearance.
+- **Panel height** — about 347 DIP for one account and 518 DIP for four, so the list does not scroll until 560 DIP.
 - **Refresh** — every 10 minutes, plus a catch-up refresh when the panel opens after 2 minutes; `Cmd+R` for manual refresh.
+- **Errors** — a failing account only marks its own row (and shows a RETRY in the readout when selected); partial failures get a banner, total failure gets a problem page and `tray.error`.
 
-Data comes from the public `https://api.fxtwitter.com/<handle>` endpoint; avatars from `pbs.twimg.com`. No keys or tokens are embedded. Install by opening `stevefans.bar` with Metrix.Bar, or POST it to `/v0/dashboards` as shown above.
+Data comes from the public `https://api.fxtwitter.com/<handle>` endpoint; avatars from `unavatar.io`. No keys or tokens are embedded. Install by opening `stevefans.bar` with Metrix.Bar, or POST it to `/v0/dashboards` as shown above.
