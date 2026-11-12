@@ -12,7 +12,7 @@
 
 ## 预览
 
-截图取自真实账号数据；本机趋势需首次打开看板后逐日积累，截图里尚未攒够两天，所以趋势区显示空态。
+截图里的账号是真实的，趋势和涨跌用的是样本数据。实际使用时，面积图需要开板后逐日积累两天以上采样才会出现，之前显示虚线空态。
 
 | 浅色 | 深色 |
 | :---: | :---: |
@@ -133,7 +133,7 @@ jq -n --rawfile source stevefans.bar '{source:$source,tree:true,scheduled:true}'
 
 A [Metrix.Bar](https://metrix.bar) dashboard for X follower counts: a 5×7 dot-matrix readout for the selected account, a one-line-per-account list, a 7-day delta and a 14-day area chart.
 
-Screenshots use real account data; the local trend needs two daily samples before the chart appears, so they show the empty state.
+The accounts in these screenshots are real; the trend and deltas are sample data. In normal use the chart needs two daily samples before it appears, showing a dashed placeholder until then.
 
 - **Readout + list** — the card on top shows the selected account's avatar, name, badge, dot-matrix follower count (hover for the exact figure), 7-day delta, 14-day chart and FOLLOWING / POSTS / JOINED. Every tracked account gets one 34 DIP row with its count and delta.
 - **Switching accounts** — click a row to move it into the readout, double-click to open it on X; the choice persists in `localStorage`. The menu bar always shows the first account.
