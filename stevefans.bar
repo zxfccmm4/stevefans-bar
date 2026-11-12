@@ -1,7 +1,7 @@
 <bar protocol-version="0"
      id="stevefans"
      title="SteveFans"
-     version="1.12.1"
+     version="1.12.2"
      category="social"
      description="Lobe MyGo 风格的 X 粉丝看板：点阵标题、数字与标签，主读数加账号列表，滚动动画、X 认证徽章和 14 天面积图。"
      license="MIT"
@@ -42,13 +42,14 @@ const VERIFIED = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
 
 // The header glyphs keep the lucide silhouettes but are rasterised into
 // the same square pixel grid as the dot font: 14 cells shown at 14 DIP.
+const PIX_XMARK =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="currentColor" shape-rendering="crispEdges"><rect x="0.000" y="0.000" width="1.0" height="1.0"/><rect x="1.000" y="0.000" width="1.0" height="1.0"/><rect x="2.000" y="0.000" width="1.0" height="1.0"/><rect x="8.000" y="0.000" width="1.0" height="1.0"/><rect x="1.000" y="1.000" width="1.0" height="1.0"/><rect x="2.000" y="1.000" width="1.0" height="1.0"/><rect x="3.000" y="1.000" width="1.0" height="1.0"/><rect x="7.000" y="1.000" width="1.0" height="1.0"/><rect x="8.000" y="1.000" width="1.0" height="1.0"/><rect x="2.000" y="2.000" width="1.0" height="1.0"/><rect x="3.000" y="2.000" width="1.0" height="1.0"/><rect x="4.000" y="2.000" width="1.0" height="1.0"/><rect x="6.000" y="2.000" width="1.0" height="1.0"/><rect x="7.000" y="2.000" width="1.0" height="1.0"/><rect x="2.000" y="3.000" width="1.0" height="1.0"/><rect x="3.000" y="3.000" width="1.0" height="1.0"/><rect x="4.000" y="3.000" width="1.0" height="1.0"/><rect x="5.000" y="3.000" width="1.0" height="1.0"/><rect x="6.000" y="3.000" width="1.0" height="1.0"/><rect x="3.000" y="4.000" width="1.0" height="1.0"/><rect x="4.000" y="4.000" width="1.0" height="1.0"/><rect x="5.000" y="4.000" width="1.0" height="1.0"/><rect x="4.000" y="5.000" width="1.0" height="1.0"/><rect x="5.000" y="5.000" width="1.0" height="1.0"/><rect x="6.000" y="5.000" width="1.0" height="1.0"/><rect x="3.000" y="6.000" width="1.0" height="1.0"/><rect x="4.000" y="6.000" width="1.0" height="1.0"/><rect x="5.000" y="6.000" width="1.0" height="1.0"/><rect x="6.000" y="6.000" width="1.0" height="1.0"/><rect x="7.000" y="6.000" width="1.0" height="1.0"/><rect x="2.000" y="7.000" width="1.0" height="1.0"/><rect x="5.000" y="7.000" width="1.0" height="1.0"/><rect x="6.000" y="7.000" width="1.0" height="1.0"/><rect x="7.000" y="7.000" width="1.0" height="1.0"/><rect x="1.000" y="8.000" width="1.0" height="1.0"/><rect x="2.000" y="8.000" width="1.0" height="1.0"/><rect x="6.000" y="8.000" width="1.0" height="1.0"/><rect x="7.000" y="8.000" width="1.0" height="1.0"/><rect x="8.000" y="8.000" width="1.0" height="1.0"/><rect x="1.000" y="9.000" width="1.0" height="1.0"/><rect x="7.000" y="9.000" width="1.0" height="1.0"/><rect x="8.000" y="9.000" width="1.0" height="1.0"/><rect x="9.000" y="9.000" width="1.0" height="1.0"/></svg>';
 const PIX_REFRESH =
   '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="currentColor" shape-rendering="crispEdges"><rect x="5" y="1" width="1" height="1"/><rect x="6" y="1" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="1"/><rect x="12" y="1" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="5" y="2" width="1" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="7" y="2" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="11" y="2" width="1" height="1"/><rect x="12" y="2" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="10" y="3" width="1" height="1"/><rect x="11" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="2" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="12" y="5" width="1" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="11" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="1" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="1" y="8" width="1" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="2" y="9" width="1" height="1"/><rect x="2" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="4" y="11" width="1" height="1"/><rect x="5" y="11" width="1" height="1"/><rect x="6" y="11" width="1" height="1"/><rect x="5" y="12" width="1" height="1"/><rect x="6" y="12" width="1" height="1"/><rect x="7" y="12" width="1" height="1"/></svg>';
 const PIX_EXTERNAL =
   '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="currentColor" shape-rendering="crispEdges"><rect x="4" y="3" width="1" height="1"/><rect x="5" y="3" width="1" height="1"/><rect x="6" y="3" width="1" height="1"/><rect x="7" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="9" y="3" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="5" y="4" width="1" height="1"/><rect x="6" y="4" width="1" height="1"/><rect x="7" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="7" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="9" y="7" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="5" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="9" y="8" width="1" height="1"/><rect x="10" y="8" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="4" y="9" width="1" height="1"/><rect x="5" y="9" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/><rect x="4" y="10" width="1" height="1"/><rect x="9" y="10" width="1" height="1"/></svg>';
 
 const ICON = {
-  x: XMARK,
   verified: VERIFIED,
   refresh: PIX_REFRESH,
   external: PIX_EXTERNAL,
@@ -519,9 +520,9 @@ function Header() {
   const handle = row ? (row.data ? row.data.handle : row.handle) : "";
   const url = row && row.data ? row.data.url : handle ? "https://x.com/" + encodeURIComponent(handle) : "https://x.com";
   return h("Column", { tw: "w-full" },
-    h("Row", { tw: "gap-2 py-2.5 px-3 items-center w-full min-w-0" },
-      Icon("x", 24, "text"),
-      Dot("SteveFans", 3, "text"),
+    h("Row", { tw: "gap-2.5 py-2 px-3 items-center w-full min-w-0" },
+      h("Icon", { svg: PIX_XMARK, tw: "size-[17px] shrink-0", label: "X" }),
+      Dot("SteveFans", 2.5, "text"),
       h("Spacer"),
       loadedAt ? h("Row", { tw: "items-center shrink-0", tooltip: "最后更新 " + clock(loadedAt) },
         Dot(ago(loadedAt), 2, ink.label())) : null,
@@ -708,7 +709,7 @@ function panelHeight() {
   const hero = sel && (sel.data || loading) ? 270 : 132;
   const list = rows.length > 1 ? 27 + 36 * rows.length : 0;
   const banner = loaded && error ? 46 : 0;
-  return 47 + 24 + hero + list + banner + 6;
+  return 34 + 24 + hero + list + banner + 6;   // header row, list padding, readout, list, banner, breathing room
 }
 
 const panelTree = () => {
